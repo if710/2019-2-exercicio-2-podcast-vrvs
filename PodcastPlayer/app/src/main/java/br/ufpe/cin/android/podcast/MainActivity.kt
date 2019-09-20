@@ -14,15 +14,22 @@ class MainActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
 
-        recycler_view.adapter = ItemFeedAdapter(listOf())
+        recycler_view.adapter = ItemFeedAdapter(listOf(), this)
         recycler_view.layoutManager = LinearLayoutManager(this)
+
+        var main : MainActivity = this
 
         doAsync {
             val xml = URL("https://s3-us-west-1.amazonaws.com/podcasts.thepolyglotdeveloper.com/podcast.xml").readText()
             val itemFeedList : List<ItemFeed> = Parser.parse(xml)
+            val db = ItemFeedDB.getDatabase(applicationContext)
+
+            itemFeedList.forEach {
+                db.itemFeedDao().insert(it)
+            }
 
             uiThread {
-                recycler_view.adapter = ItemFeedAdapter(itemFeedList)
+                recycler_view.adapter = ItemFeedAdapter(itemFeedList, main)
             }
         }
     }
