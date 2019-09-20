@@ -6,6 +6,7 @@ import androidx.recyclerview.widget.LinearLayoutManager
 import kotlinx.android.synthetic.main.activity_main.*
 import org.jetbrains.anko.doAsync
 import org.jetbrains.anko.uiThread
+import java.lang.Exception
 import java.net.URL
 
 class MainActivity : AppCompatActivity() {
@@ -19,14 +20,21 @@ class MainActivity : AppCompatActivity() {
 
         var main : MainActivity = this
 
-        doAsync {
-            val xml = URL("https://s3-us-west-1.amazonaws.com/podcasts.thepolyglotdeveloper.com/podcast.xml").readText()
-            val itemFeedList : List<ItemFeed> = Parser.parse(xml)
-            val db = ItemFeedDB.getDatabase(applicationContext)
+        var itemFeedList : List<ItemFeed>
+        val db = ItemFeedDB.getDatabase(applicationContext)
 
-            itemFeedList.forEach {
-                db.itemFeedDao().insert(it)
+        doAsync {
+            try {
+                val xml = URL("https://s3-us-west-1.amazonaws.com/podcasts.thepolyglotdeveloper.com/podcast.xml").readText()
+                itemFeedList = Parser.parse(xml)
+
+                itemFeedList.forEach {
+                    db.itemFeedDao().insert(it)
+                }
+            } catch (e: Exception) {
+                itemFeedList = db.itemFeedDao().findAll()
             }
+
 
             uiThread {
                 recycler_view.adapter = ItemFeedAdapter(itemFeedList, main)
